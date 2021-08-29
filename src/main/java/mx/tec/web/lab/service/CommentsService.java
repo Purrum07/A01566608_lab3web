@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -37,13 +38,15 @@ public class CommentsService {
 	private WebClient webClient;
 	
 	/** Rest end point */
-	private String endpoint = "https://jsonplaceholder.typicode.com";
+	//@Value("${commentsEndpoint}")
+	private String endpoint;
 
 	/**
-	 * No args constructor
+	 * Constructor with the endpoint value from application.properties
 	 */
-	public CommentsService() {
+	public CommentsService(@Value("${commentsEndpoint}") String endpoint) {
 		this.webClient = WebClient.create(endpoint);
+		this.endpoint = endpoint;
 	}
 	
 	/**

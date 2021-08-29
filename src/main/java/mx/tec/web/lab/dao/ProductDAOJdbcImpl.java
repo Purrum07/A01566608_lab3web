@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import mx.tec.web.lab.service.CommentsService;
 import mx.tec.web.lab.vo.ProductVO;
+import mx.tec.web.lab.vo.SkuVO;
 
 /**
  * @author Enrique Sanchez
@@ -32,6 +33,30 @@ public class ProductDAOJdbcImpl implements ProductDAO {
 	
 	/** Description field **/
 	public static final String DESCRIPTION = "description";
+	
+	/** Color field**/
+	public static final String COLOR = "color";
+	
+	/** Size field**/
+	public static final String SIZE = "size";
+	
+	/** List Price field**/
+	public static final String LIST_PRICE = "listPrice";
+	
+	/** Sale Price field**/
+	public static final String SALE_PRICE = "salePrice";
+	
+	/** Quantity On Hand field**/
+	public static final String QUANTITY_ON_HAND= "quantityOnHand";
+	
+	/** Small Image Url field**/
+	public static final String SMALL_IMAGE_URL= "smallImageUrl";
+	
+	/** Medium Image Url field**/
+	public static final String MEDIUM_IMAGE_URL= "mediumImageUrl";
+	
+	/** Large Image Url field**/
+	public static final String LARGE_IMAGE_URL= "largeImageUrl";
 
 	@Autowired
 	JdbcTemplate jdbcTemplate;
@@ -45,13 +70,35 @@ public class ProductDAOJdbcImpl implements ProductDAO {
 
 		return jdbcTemplate.query(sql, (ResultSet rs) -> {
 			List<ProductVO> list = new ArrayList<>();
+			List<SkuVO> skusList = new ArrayList<>();
 
 			while(rs.next()){
+				String parentId = String.valueOf(rs.getLong(ID));
+				String skusSql = "SELECT id, color, size, listprice, saleprice, quantityOnHand, smallImageUrl, mediumImageUrl, largeImageUrl FROM sku WHERE parentProduct_id = "+ parentId;
+				
+				jdbcTemplate.query(skusSql, (ResultSet skuRs) -> {
+					
+					while(skuRs.next()) {
+						SkuVO skus = new SkuVO(
+							skuRs.getLong(ID),
+							skuRs.getString(COLOR),
+							skuRs.getString(SIZE),
+							skuRs.getDouble(LIST_PRICE),
+							skuRs.getDouble(SALE_PRICE),
+							skuRs.getLong(QUANTITY_ON_HAND),
+							skuRs.getString(SMALL_IMAGE_URL),
+							skuRs.getString(MEDIUM_IMAGE_URL),
+							skuRs.getString(LARGE_IMAGE_URL)
+						);
+						skusList.add(skus);
+					}
+				});
+				
 				ProductVO product = new ProductVO(
 					rs.getLong(ID),
 					rs.getString(NAME), 
 					rs.getString(DESCRIPTION), 
-					new ArrayList<>(),
+					skusList,
 					commentService.getComments()
 				);
 
@@ -68,13 +115,35 @@ public class ProductDAOJdbcImpl implements ProductDAO {
         
 		return jdbcTemplate.query(sql, new Object[]{id}, new int[]{java.sql.Types.INTEGER}, (ResultSet rs) -> {
 			Optional<ProductVO> optionalProduct = Optional.empty();
+			List<SkuVO> skusList = new ArrayList<>();
 
 			if(rs.next()){
+				String parentId = String.valueOf(rs.getLong(ID));
+				String skusSql = "SELECT id, color, size, listprice, saleprice, quantityOnHand, smallImageUrl, mediumImageUrl, largeImageUrl FROM sku WHERE parentProduct_id = "+ parentId;
+				
+				jdbcTemplate.query(skusSql, (ResultSet skuRs) -> {
+					
+					
+					while(skuRs.next()) {
+						SkuVO skus = new SkuVO(
+							skuRs.getLong(ID),
+							skuRs.getString(COLOR),
+							skuRs.getString(SIZE),
+							skuRs.getDouble(LIST_PRICE),
+							skuRs.getDouble(SALE_PRICE),
+							skuRs.getLong(QUANTITY_ON_HAND),
+							skuRs.getString(SMALL_IMAGE_URL),
+							skuRs.getString(MEDIUM_IMAGE_URL),
+							skuRs.getString(LARGE_IMAGE_URL)
+						);
+						skusList.add(skus);
+					}
+				});
 				ProductVO product = new ProductVO(
 					rs.getLong(ID),
 					rs.getString(NAME), 
 					rs.getString(DESCRIPTION), 
-					new ArrayList<>(),
+					skusList,
 					commentService.getComments()
 				);
 				
@@ -91,13 +160,36 @@ public class ProductDAOJdbcImpl implements ProductDAO {
 
 		return jdbcTemplate.query(sql, new Object[]{"%" + pattern + "%"}, new int[]{java.sql.Types.VARCHAR}, (ResultSet rs) -> {
 			List<ProductVO> list = new ArrayList<>();
+			List<SkuVO> skusList = new ArrayList<>();
 
 			while(rs.next()){
+				String parentId = String.valueOf(rs.getLong(ID));
+				String skusSql = "SELECT id, color, size, listprice, saleprice, quantityOnHand, smallImageUrl, mediumImageUrl, largeImageUrl FROM sku WHERE parentProduct_id = "+ parentId;
+				
+				jdbcTemplate.query(skusSql, (ResultSet skuRs) -> {
+					
+					
+					while(skuRs.next()) {
+						SkuVO skus = new SkuVO(
+							skuRs.getLong(ID),
+							skuRs.getString(COLOR),
+							skuRs.getString(SIZE),
+							skuRs.getDouble(LIST_PRICE),
+							skuRs.getDouble(SALE_PRICE),
+							skuRs.getLong(QUANTITY_ON_HAND),
+							skuRs.getString(SMALL_IMAGE_URL),
+							skuRs.getString(MEDIUM_IMAGE_URL),
+							skuRs.getString(LARGE_IMAGE_URL)
+						);
+						skusList.add(skus);
+					}
+				});
+				
 				ProductVO product = new ProductVO(
 					rs.getLong(ID),
 					rs.getString(NAME), 
 					rs.getString(DESCRIPTION), 
-					new ArrayList<>(),
+					skusList,
 					commentService.getComments()
 				);
 				
@@ -116,8 +208,12 @@ public class ProductDAOJdbcImpl implements ProductDAO {
 
 	@Override
 	public void remove(ProductVO existingProduct) {
-		// TODO Auto-generated method stub
-
+		
+		String deleteProductSql = "DELETE FROM product WHERE id = "+ existingProduct.getId();
+		jdbcTemplate.update(deleteProductSql);
+		
+		String deleteSkuSql = "DELETE FROM sku WHERE parentProduct_id = "+ existingProduct.getId();
+		jdbcTemplate.update(deleteSkuSql);
 	}
 
 	@Override
